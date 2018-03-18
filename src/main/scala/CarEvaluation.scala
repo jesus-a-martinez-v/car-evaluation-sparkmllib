@@ -1,7 +1,9 @@
 import org.apache.spark.sql.SparkSession
 
 object CarEvaluation extends App {
-  withSparkSession {
+  withSparkSession { session =>
+    implicit val sparkSession: SparkSession = session
+
     val data = Data.loadCarData()
     Data.printStatisticsAndSchema(data)
 
@@ -25,9 +27,9 @@ object CarEvaluation extends App {
     sparkSession
   }
 
-  private def withSparkSession(f: => Unit): Unit = {
+  private def withSparkSession(f: SparkSession => Unit): Unit = {
     implicit val spark: SparkSession = getSparkSession
-    f()
+    f(spark)
     spark.stop()
   }
 }

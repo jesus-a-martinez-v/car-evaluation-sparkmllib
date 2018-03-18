@@ -1,16 +1,14 @@
-import CarEvaluation.spark
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.tuning.{ParamGridBuilder, TrainValidationSplit, TrainValidationSplitModel}
 import org.apache.spark.mllib.evaluation.MulticlassMetrics
-import org.apache.spark.sql.{DataFrame, Dataset, Row}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 object Train {
-  import spark.sqlContext.implicits._
 
-  def trainAndTest(dataFrame: DataFrame, trainData: Dataset[Row], testData: Dataset[Row]): Unit = {
+  def trainAndTest(dataFrame: DataFrame, trainData: Dataset[Row], testData: Dataset[Row])(implicit spark: SparkSession): Unit = {
     val featuresColumns = dataFrame.columns.filterNot(_ == "label")
 
     val assembler = new VectorAssembler()
@@ -38,7 +36,9 @@ object Train {
     evaluateAndPrintStatistics(model, testData)
   }
 
-  private def evaluateAndPrintStatistics(model: TrainValidationSplitModel, testData: Dataset[Row]): Unit = {
+  private def evaluateAndPrintStatistics(model: TrainValidationSplitModel, testData: Dataset[Row])(implicit spark: SparkSession): Unit = {
+    import spark.sqlContext.implicits._
+
     val results = model.transform(testData)
 
     val predictionAndLabels = results.select(results("prediction"), results("label")).as[(Double, Double)].rdd
@@ -53,6 +53,5 @@ object Train {
     println("Weighted Precision: " + metrics.weightedPrecision)
     println("Weighted Recall: " + metrics.weightedRecall)
     println("Weighted True Positive Rate: " + metrics.weightedTruePositiveRate)
-
   }
 }
