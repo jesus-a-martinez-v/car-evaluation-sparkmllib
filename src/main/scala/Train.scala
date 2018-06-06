@@ -8,7 +8,10 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 object Train {
 
-  def trainAndTest(dataFrame: DataFrame, trainData: Dataset[Row], testData: Dataset[Row])(implicit spark: SparkSession): Unit = {
+  def trainAndTest(dataFrame: DataFrame,
+                   trainData: Dataset[Row],
+                   testData: Dataset[Row],
+                   trainProportion: Double = 0.8)(implicit spark: SparkSession): Unit = {
     val featuresColumns = dataFrame.columns.filterNot(_ == "label")
 
     val assembler = new VectorAssembler()
@@ -26,11 +29,12 @@ object Train {
     val stages = Array(assembler, classifier)
     val pipeline = new Pipeline().setStages(stages)
 
-    val trainValidationSplit = new TrainValidationSplit()
-      .setEstimator(pipeline)
-      .setEvaluator(new MulticlassClassificationEvaluator())
-      .setEstimatorParamMaps(paramGrid)
-      .setTrainRatio(0.8)
+    val trainValidationSplit =
+      new TrainValidationSplit()
+        .setEstimator(pipeline)
+        .setEvaluator(new MulticlassClassificationEvaluator())
+        .setEstimatorParamMaps(paramGrid)
+        .setTrainRatio(trainProportion)
 
     val model = trainValidationSplit.fit(trainData)
     evaluateAndPrintStatistics(model, testData)
@@ -47,7 +51,7 @@ object Train {
 
     println("Confusion Matrix: ")
     println(metrics.confusionMatrix)
-
+    println()
     println("Accuracy: " + metrics.accuracy)
     println("Weighted False Positive Rate: " + metrics.weightedFalsePositiveRate)
     println("Weighted Precision: " + metrics.weightedPrecision)

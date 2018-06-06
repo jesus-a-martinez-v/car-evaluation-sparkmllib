@@ -1,11 +1,9 @@
-import java.io.File
-
 import org.apache.spark.sql.functions.udf
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 object Data {
 
-  def loadCarData()(implicit spark: SparkSession): DataFrame = getData(new File(this.getClass.getClassLoader.getResource("car.data").toURI).getPath)
+  def loadCarData()(implicit spark: SparkSession): DataFrame = getData(this.getClass.getClassLoader.getResource("car.data").toExternalForm)
 
   def printStatisticsAndSchema(dataFrame: DataFrame): Unit = {
     dataFrame.printSchema()
